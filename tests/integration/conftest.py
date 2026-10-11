@@ -14,6 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import services.acquirer.main as acquirer_main
+import services.gateway.fraud as gateway_fraud
 import services.gateway.routes as gateway_routes
 import services.issuer.main as issuer_main
 import services.network.main as network_main
@@ -68,3 +69,4 @@ def route_post_with_retry(monkeypatch, service_clients):
     monkeypatch.setattr(processor_main, "post_with_retry", fake_post_with_retry)
     monkeypatch.setattr(network_main, "post_with_retry", fake_post_with_retry)
     monkeypatch.setattr(gateway_routes, "post_with_retry", fake_post_with_retry)
+    monkeypatch.setattr(gateway_fraud, "post_with_retry", fake_post_with_retry)

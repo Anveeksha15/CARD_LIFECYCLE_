@@ -14,11 +14,15 @@ def buy(
     *,
     idempotency_key: str | None = None,
     simulate_lost_response: bool = False,
+    customer_ip: str | None = None,
+    customer_email: str | None = None,
+    quiet: bool = False,
 ) -> dict:
     token_resp = httpx.post(f"{GATEWAY_URL}/v1/tokens", json={"card_number": card_number})
     token_resp.raise_for_status()
     token = token_resp.json()["token"]
-    print(f"tokenized card -> {token}")
+    if not quiet:
+        print(f"tokenized card -> {token}")
 
     headers = {"Authorization": f"Bearer {API_KEY}"}
     if idempotency_key:
@@ -28,13 +32,19 @@ def buy(
 
     intent_resp = httpx.post(
         f"{GATEWAY_URL}/v1/payment_intents",
-        json={"amount_cents": amount_cents, "token": token},
+        json={
+            "amount_cents": amount_cents,
+            "token": token,
+            "customer_ip": customer_ip,
+            "customer_email": customer_email,
+        },
         headers=headers,
         timeout=10.0,
     )
     intent_resp.raise_for_status()
     result = intent_resp.json()
-    print(result)
+    if not quiet:
+        print(result)
     return result
 
 

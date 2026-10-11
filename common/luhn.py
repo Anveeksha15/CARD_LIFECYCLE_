@@ -21,6 +21,11 @@ TEST_CARD_NUMBERS = [
 ]
 
 
+def complete_luhn(partial: str) -> str:
+    """Append the check digit that makes `partial` Luhn-valid (for generating fake cards)."""
+    return next(partial + d for d in "0123456789" if is_luhn_valid(partial + d))
+
+
 def is_luhn_valid(number: str) -> bool:
     digits = [c for c in number if c.isdigit()]
     if len(digits) != len(number) or len(digits) < 2:

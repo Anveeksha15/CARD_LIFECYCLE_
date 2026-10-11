@@ -15,10 +15,14 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - ACQUIRER_URL=http://acquirer:8001
       - MERCHANT_WEBHOOK_URL=http://merchant-demo:9000/webhook
+      - FRAUD_URL=http://fraud:8005
+      # On for the demo; `FRAUD_CHECK_ENABLED=false docker compose up -d gateway` turns it off.
+      - FRAUD_CHECK_ENABLED=${FRAUD_CHECK_ENABLED:-true}
     depends_on:
       - redis
       - acquirer
       - merchant-demo
+      - fraud
 
   merchant-demo:
     build: .
@@ -71,6 +75,22 @@ services:
       - NETWORK_URL=http://network:8003
     depends_on:
       - network
+
+  fraud:
+    build:
+      context: .
+      args:
+        UV_SYNC_ARGS: "--group ml"
+        TRAIN_FRAUD_MODEL: "true"
+    command: ["python", "-m", "uvicorn", "services.fraud.main:app", "--host", "0.0.0.0", "--port", "8005"]
+    ports:
+      - "8005:8005"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
 
   settlement:
     build: .

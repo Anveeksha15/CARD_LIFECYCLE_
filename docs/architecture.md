@@ -21,6 +21,14 @@ diagram. Two details worth calling out:
 - **Every hop carries a `request_id`** that the gateway generates once per attempt and
   that flows unchanged through `acquirer -> processor -> network -> issuer`. This is
   what makes the reversal flow below possible.
+- **The fraud check** (when `FRAUD_CHECK_ENABLED`) sits between detokenizing and the
+  acquirer: the gateway sends a card fingerprint, BIN, the shopper's IP/email and the
+  amount to `services/fraud`'s `POST /v1/score` with a 150 ms budget. A `block` declines
+  the payment as `fraud_suspected` without calling the acquirer; anything else - including
+  the fraud service being slow or down - continues down the chain. Once the outcome is
+  known (the issuer's answer, or the block itself, recorded as a decline), the gateway
+  reports it to `POST /v1/outcome` in a background task.
+  Details in [fraud.md](fraud.md).
 
 ### 2. Settlement ("days later", compressed to seconds)
 
@@ -76,6 +84,18 @@ server-generated one the caller never received - see
 | 3 | `acquirer`, `gateway` tokenization + `payment_intents` - the front half |
 | 4 | Idempotency, signed webhooks, timeouts/retries, the reversal path |
 | 5 | Settlement worker + ledger, integration tests, CI, these docs |
+
+The fraud layer was a second 7-day build on its own branch:
+
+| Day | What |
+|---|---|
+| 1 | Synthetic traffic with labeled attacks, offline window features, rules baseline |
+| 2 | The same features in Redis, plus a parity test between the two |
+| 3 | Time-split training: logistic regression and gradient boosting vs rules |
+| 4 | `services/fraud` (`/v1/score`, `/v1/outcome`), model trained at image build |
+| 5 | Gateway integration behind a flag, fail-open, demo burst, latency script |
+| 6 | Edge-case tests, 503 on Redis loss, pooled HTTP client (halved latency) |
+| 7 | Seed robustness, [fraud.md](fraud.md) write-up, README |
 
 ## Service boundaries
 

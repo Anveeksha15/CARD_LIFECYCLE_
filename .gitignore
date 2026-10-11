@@ -8,3 +8,5 @@ __pycache__/
 *.db-journal
 .vscode/
 .idea/
+ml/data/
+ml/artifacts/

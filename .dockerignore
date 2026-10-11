@@ -1,0 +1,13 @@
+# Keep host-only state out of the image: a Windows .venv copied over the image's own
+# breaks it, and the fraud image trains its model at build time instead of copying one.
+.venv/
+.git/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.db
+*.db-journal
+.env
+ml/data/
+ml/artifacts/

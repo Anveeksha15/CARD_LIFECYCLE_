@@ -4,6 +4,10 @@ import httpx
 
 from common.config import settings
 
+# One pooled client per process: reusing keep-alive connections skips a TCP handshake on
+# every inter-service hop. httpx.Client is safe to share across FastAPI's worker threads.
+_client = httpx.Client()
+
 
 class UpstreamError(Exception):
     pass
@@ -24,7 +28,7 @@ def post_with_retry(
     last_exc: Exception | None = None
     for attempt in range(1, max_attempts + 1):
         try:
-            resp = httpx.post(url, json=json, timeout=timeout)
+            resp = _client.post(url, json=json, timeout=timeout)
             resp.raise_for_status()
             return resp
         except (httpx.TimeoutException, httpx.ConnectError, httpx.HTTPStatusError) as exc:
